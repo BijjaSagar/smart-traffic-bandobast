@@ -8,6 +8,11 @@ import { postsRouter } from "./routes/posts.js";
 import { attendanceRouter } from "./routes/attendance.js";
 import { sosRouter } from "./routes/sos.js";
 import { usersRouter } from "./routes/users.js";
+import { plannerRouter } from "./routes/planner.js";
+import { riskRouter } from "./routes/risk.js";
+import { reportsRouter } from "./routes/reports.js";
+import { convoysRouter } from "./routes/convoys.js";
+import { checkpointsRouter } from "./routes/checkpoints.js";
 import { initSocket } from "./lib/socket.js";
 
 const app = express();
@@ -24,6 +29,11 @@ app.use("/api/posts", postsRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/sos", sosRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/planner", plannerRouter);
+app.use("/api/risk", riskRouter);
+app.use("/api/reports", reportsRouter);
+app.use("/api/convoys", convoysRouter);
+app.use("/api/checkpoints", checkpointsRouter);
 
 const server = http.createServer(app);
 initSocket(server, corsOrigins);

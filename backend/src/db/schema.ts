@@ -4,6 +4,9 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["admin", "commander", "officer"]);
+export const agencyEnum = pgEnum("agency", [
+  "traffic_police", "local_police", "fire", "medical", "municipal",
+]);
 export const eventStatusEnum = pgEnum("event_status", ["planned", "live", "completed"]);
 export const postTypeEnum = pgEnum("post_type", [
   "picket", "barricade", "checkpoint", "medical", "parking",
@@ -12,6 +15,9 @@ export const attendanceStatusEnum = pgEnum("attendance_status", [
   "present", "late", "absent",
 ]);
 export const sosStatusEnum = pgEnum("sos_status", ["open", "acknowledged", "resolved"]);
+export const convoyStatusEnum = pgEnum("convoy_status", ["scheduled", "active", "completed"]);
+export const watchlistSeverityEnum = pgEnum("watchlist_severity", ["alert", "hold"]);
+export const checkpointOutcomeEnum = pgEnum("checkpoint_outcome", ["clear", "flagged", "hold"]);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -20,6 +26,7 @@ export const users = pgTable("users", {
   phone: varchar("phone", { length: 20 }),
   email: varchar("email", { length: 160 }).notNull().unique(),
   role: roleEnum("role").notNull().default("officer"),
+  agency: agencyEnum("agency").notNull().default("traffic_police"),
   passwordHash: text("password_hash").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -87,4 +94,49 @@ export const sosAlerts = pgTable("sos_alerts", {
   acknowledgedAt: timestamp("acknowledged_at"),
   resolvedAt: timestamp("resolved_at"),
   isDrill: boolean("is_drill").notNull().default(false),
+});
+
+// --- Module 7: Green Corridor / VIP Movement Automation ---
+
+export const convoys = pgTable("convoys", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
+  label: varchar("label", { length: 120 }).notNull(),
+  status: convoyStatusEnum("status").notNull().default("scheduled"),
+  currentWaypointIndex: integer("current_waypoint_index").notNull().default(-1), // -1 = not started
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const convoyWaypoints = pgTable("convoy_waypoints", {
+  id: serial("id").primaryKey(),
+  convoyId: integer("convoy_id").notNull().references(() => convoys.id, { onDelete: "cascade" }),
+  sequence: integer("sequence").notNull(), // order along the route, 0-based
+  junctionName: varchar("junction_name", { length: 120 }).notNull(),
+  lat: doublePrecision("lat").notNull(),
+  lng: doublePrecision("lng").notNull(),
+  preAlertMinutes: integer("pre_alert_minutes").notNull().default(5),
+  reachedAt: timestamp("reached_at"),
+});
+
+// --- Module 8: Digital Nakabandi & QR Vehicle Verification ---
+
+export const watchlistEntries = pgTable("watchlist_entries", {
+  id: serial("id").primaryKey(),
+  vehicleNumber: varchar("vehicle_number", { length: 20 }).notNull(),
+  reason: text("reason").notNull(),
+  severity: watchlistSeverityEnum("severity").notNull().default("alert"),
+  addedBy: integer("added_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const checkpointLogs = pgTable("checkpoint_logs", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  vehicleNumber: varchar("vehicle_number", { length: 20 }).notNull(),
+  matchedWatchlistEntryId: integer("matched_watchlist_entry_id").references(() => watchlistEntries.id),
+  outcome: checkpointOutcomeEnum("outcome").notNull().default("clear"),
+  checkedBy: integer("checked_by").notNull().references(() => users.id),
+  checkedAt: timestamp("checked_at").notNull().defaultNow(),
 });

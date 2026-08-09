@@ -1,0 +1,8 @@
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.env
+*.g.dart
+android/local.properties
+ios/Flutter/Flutter.podspec

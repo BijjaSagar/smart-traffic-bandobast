@@ -12,8 +12,12 @@ diversion engine, WhatsApp citizen bot, multi-agency dashboard) plug into the sa
 
 ```
 backend/    Node.js + Express + TypeScript + Drizzle ORM + PostgreSQL + Socket.io
-frontend/   React + Vite + TypeScript + Tailwind + MapLibre GL
+frontend/   React + Vite + TypeScript + Tailwind + MapLibre GL   (control room / commander)
+mobile/     Flutter + BLoC (feature-first)                       (field officer app)
 ```
+
+All three talk to the same backend API — one source of truth, no duplicated logic between
+the web command dashboard and the field app.
 
 ## Quick start (local)
 
@@ -27,7 +31,7 @@ npm run db:seed           # creates a demo admin + officer + sample event
 npm run dev                # http://localhost:4000
 ```
 
-### 2. Frontend
+### 2. Frontend (web command dashboard)
 ```bash
 cd frontend
 cp .env.example .env      # set VITE_API_URL=http://localhost:4000
@@ -35,8 +39,17 @@ npm install
 npm run dev                # http://localhost:5173
 ```
 
-Demo login (after seed): `admin@sbs.local` / `Admin@123` (Commander) and
-`officer@sbs.local` / `Officer@123` (Field Officer).
+### 3. Mobile (Flutter field officer app)
+```bash
+cd mobile
+flutter create --project-name smart_bandobast --org in.rhtechnology .   # generates android/ ios/ around lib/
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4000              # 10.0.2.2 = Android emulator's localhost
+```
+See `mobile/README.md` for iOS location-permission setup and physical-device notes.
+
+Demo login (after seed): `admin@sbs.local` / `Admin@123` (Commander, web dashboard) and
+`officer@sbs.local` / `Officer@123` (Field Officer, mobile app).
 
 ## Deploying
 
@@ -52,6 +65,12 @@ Demo login (after seed): `admin@sbs.local` / `Admin@123` (Commander) and
 2. Framework preset: Vite. Build command `npm run build`, output `dist`.
 3. Env var: `VITE_API_URL` = your Railway backend URL (e.g. `https://sbs-backend.up.railway.app`).
 4. Deploy.
+
+### Mobile → Play Store / App Store
+1. Generate platform folders (`flutter create .` as above), point `--dart-define=API_BASE_URL`
+   at the production Railway URL in your release build command.
+2. `flutter build appbundle` (Android) / `flutter build ipa` (iOS) once RH Technology's
+   Play Console / App Store Connect accounts are ready — same pattern as other field apps.
 
 ## Data model (Phase 1)
 

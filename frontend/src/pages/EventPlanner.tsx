@@ -19,6 +19,15 @@ export default function EventPlanner() {
     startAt: "", endAt: "", expectedFootfall: 10000,
   });
 
+  // Module 1 — AI Deployment Planner
+  const [suggestions, setSuggestions] = useState<any[] | null>(null);
+  const [suggestionNote, setSuggestionNote] = useState<string>("");
+  const [suggestLoading, setSuggestLoading] = useState(false);
+
+  // Module 12 — Weather & Calendar Risk
+  const [risk, setRisk] = useState<any | null>(null);
+  const [riskLoading, setRiskLoading] = useState(false);
+
   function refreshEvents() {
     api.listEvents().then((r) => {
       setEvents(r.events);
@@ -31,6 +40,10 @@ export default function EventPlanner() {
   useEffect(() => {
     if (!selectedEventId) return;
     api.getEvent(selectedEventId).then((r) => setPosts(r.posts));
+    setSuggestions(null);
+    setRisk(null);
+    setRiskLoading(true);
+    api.eventRisk(selectedEventId).then(setRisk).catch(() => setRisk(null)).finally(() => setRiskLoading(false));
   }, [selectedEventId]);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
@@ -61,6 +74,34 @@ export default function EventPlanner() {
     });
     setPendingPoint(null);
     setPostForm({ name: "", type: "picket", geofenceRadiusM: 75, requiredStrength: 2 });
+    const r = await api.getEvent(selectedEventId);
+    setPosts(r.posts);
+  }
+
+  async function handleFetchSuggestions() {
+    if (!selectedEvent) return;
+    setSuggestLoading(true);
+    try {
+      const r = await api.venueSuggestions(selectedEvent.venueName, selectedEvent.id);
+      setSuggestions(r.suggestions);
+      setSuggestionNote(r.note);
+    } finally {
+      setSuggestLoading(false);
+    }
+  }
+
+  async function handleAcceptSuggestion(s: any) {
+    if (!selectedEventId) return;
+    await api.createPost({
+      eventId: selectedEventId,
+      name: s.name,
+      type: s.type,
+      lat: s.lat,
+      lng: s.lng,
+      geofenceRadiusM: s.geofenceRadiusM,
+      requiredStrength: s.suggestedStrength,
+    });
+    setSuggestions((prev) => prev?.filter((x) => x !== s) ?? null);
     const r = await api.getEvent(selectedEventId);
     setPosts(r.posts);
   }
@@ -154,6 +195,81 @@ export default function EventPlanner() {
               <button type="button" onClick={() => setShowNewEvent(false)} className="border rounded px-3 py-1.5 text-sm">Cancel</button>
             </div>
           </form>
+        )}
+
+        {selectedEvent && (
+          <div className="border rounded-lg p-3">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold text-navy text-sm">Risk Assessment</h3>
+              {riskLoading && <span className="text-xs text-gray-400">Loading…</span>}
+            </div>
+            {risk && (
+              <>
+                <span
+                  className={`inline-block text-xs font-semibold px-2 py-0.5 rounded uppercase ${
+                    risk.riskBand === "high"
+                      ? "bg-red-100 text-alert"
+                      : risk.riskBand === "medium"
+                      ? "bg-orange-100 text-saffron"
+                      : "bg-green-100 text-green-700"
+                  }`}
+                >
+                  {risk.riskBand} risk · {risk.riskScore}/100
+                </span>
+                {risk.weather && (
+                  <p className="text-xs text-gray-600 mt-2">
+                    Forecast: {risk.weather.label}, {risk.weather.tempMaxC}°C, {risk.weather.precipProbability}% precipitation chance
+                  </p>
+                )}
+                <ul className="text-xs text-gray-500 mt-2 space-y-1 list-disc pl-4">
+                  {risk.reasons.map((r: string, i: number) => <li key={i}>{r}</li>)}
+                </ul>
+              </>
+            )}
+            {!risk && !riskLoading && <p className="text-xs text-gray-400">No risk data available.</p>}
+          </div>
+        )}
+
+        {selectedEvent && (
+          <div className="border rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-navy text-sm">AI Deployment Planner</h3>
+              <button
+                onClick={handleFetchSuggestions}
+                disabled={suggestLoading}
+                className="text-xs bg-saffron text-white rounded px-2 py-1 disabled:opacity-50"
+              >
+                {suggestLoading ? "Checking…" : "Suggest from history"}
+              </button>
+            </div>
+            {suggestions && suggestions.length === 0 && (
+              <p className="text-xs text-gray-400">{suggestionNote}</p>
+            )}
+            {suggestions && suggestions.length > 0 && (
+              <>
+                <p className="text-xs text-gray-500 mb-2">{suggestionNote}</p>
+                <ul className="space-y-2">
+                  {suggestions.map((s, i) => (
+                    <li key={i} className="border rounded p-2 text-xs bg-orange-50">
+                      <div className="flex justify-between">
+                        <span className="font-semibold">{s.name}</span>
+                        <span className="text-gray-500 capitalize">{s.type}</span>
+                      </div>
+                      <p className="text-gray-500">
+                        Suggested strength: {s.suggestedStrength} · seen in {s.seenInPastEvents} past event(s)
+                      </p>
+                      <button
+                        onClick={() => handleAcceptSuggestion(s)}
+                        className="mt-1 bg-navy text-white rounded px-2 py-1"
+                      >
+                        Accept &amp; add to duty chart
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
         )}
 
         {pendingPoint && (

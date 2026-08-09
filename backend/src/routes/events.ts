@@ -54,21 +54,9 @@ eventsRouter.get("/:id", async (req, res) => {
 
   const postRows = await db.select().from(posts).where(eq(posts.eventId, eventId));
 
-  const assignments = await db
-    .select({
-      id: postAssignments.id,
-      postId: postAssignments.postId,
-      shiftStart: postAssignments.shiftStart,
-      shiftEnd: postAssignments.shiftEnd,
-      userId: users.id,
-      userName: users.name,
-      badgeNo: users.badgeNo,
-    })
-    .from(postAssignments)
-    .innerJoin(users, eq(postAssignments.userId, users.id))
-    .where(eq(postAssignments.postId, postRows[0]?.id ?? -1));
-
-  // For events with multiple posts, fetch assignments per post (kept simple for MVP clarity)
+  // All assignments across this event's posts in one query, then grouped
+  // per post below — includes agency (Module 10) so the dashboard can show
+  // which department each assigned officer belongs to.
   const allAssignments = postRows.length
     ? await db
         .select({
@@ -79,6 +67,7 @@ eventsRouter.get("/:id", async (req, res) => {
           userId: users.id,
           userName: users.name,
           badgeNo: users.badgeNo,
+          agency: users.agency,
         })
         .from(postAssignments)
         .innerJoin(users, eq(postAssignments.userId, users.id))

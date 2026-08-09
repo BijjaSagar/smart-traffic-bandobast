@@ -48,11 +48,50 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-  listUsers: () => request<{ users: any[] }>("/api/users"),
+  listUsers: (agency?: string) =>
+    request<{ users: any[] }>(`/api/users${agency ? `?agency=${agency}` : ""}`),
+  createUser: (data: any) =>
+    request<{ user: any }>("/api/users", { method: "POST", body: JSON.stringify(data) }),
 
   sendSos: (data: any) =>
     request<{ alert: any }>("/api/sos", { method: "POST", body: JSON.stringify(data) }),
   listSos: (eventId: number) => request<{ alerts: any[] }>(`/api/sos/event/${eventId}`),
   ackSos: (id: number) => request(`/api/sos/${id}/ack`, { method: "POST" }),
   resolveSos: (id: number) => request(`/api/sos/${id}/resolve`, { method: "POST" }),
+
+  // Module 1 — AI Deployment Planner
+  venueSuggestions: (venueName: string, excludeEventId?: number) =>
+    request<{ suggestions: any[]; basedOnEvents: number; note: string }>(
+      `/api/planner/venue-suggestions?venueName=${encodeURIComponent(venueName)}${
+        excludeEventId ? `&excludeEventId=${excludeEventId}` : ""
+      }`
+    ),
+
+  // Module 12 — Weather & Calendar Risk
+  eventRisk: (eventId: number) =>
+    request<{ riskScore: number; riskBand: string; weather: any; reasons: string[]; note: string }>(
+      `/api/risk/events/${eventId}`
+    ),
+
+  // Module 11 — After-Action Report
+  eventReport: (eventId: number) => request<any>(`/api/reports/events/${eventId}`),
+
+  // Module 7 — Green Corridor / Convoys
+  listConvoys: (eventId: number) => request<{ convoys: any[] }>(`/api/convoys/event/${eventId}`),
+  createConvoy: (data: any) =>
+    request<{ convoy: any; waypoints: any[] }>("/api/convoys", { method: "POST", body: JSON.stringify(data) }),
+  startConvoy: (id: number) => request<{ convoy: any; alertWaypoint: any }>(`/api/convoys/${id}/start`, { method: "POST" }),
+  advanceConvoy: (id: number) =>
+    request<{ convoy: any; alertWaypoint: any; isComplete: boolean }>(`/api/convoys/${id}/advance`, { method: "POST" }),
+
+  // Module 8 — Digital Nakabandi
+  listWatchlist: () => request<{ entries: any[] }>("/api/checkpoints/watchlist"),
+  addWatchlistEntry: (data: any) =>
+    request<{ entry: any }>("/api/checkpoints/watchlist", { method: "POST", body: JSON.stringify(data) }),
+  checkVehicle: (postId: number, vehicleNumber: string) =>
+    request<{ log: any; outcome: string; matchReason: string | null }>(`/api/checkpoints/${postId}/check`, {
+      method: "POST",
+      body: JSON.stringify({ vehicleNumber }),
+    }),
+  checkpointLogs: (postId: number) => request<{ logs: any[] }>(`/api/checkpoints/${postId}/logs`),
 };

@@ -13,6 +13,7 @@ import { riskRouter } from "./routes/risk.js";
 import { reportsRouter } from "./routes/reports.js";
 import { convoysRouter } from "./routes/convoys.js";
 import { checkpointsRouter } from "./routes/checkpoints.js";
+import { settingsRouter } from "./routes/settings.js";
 import { initSocket } from "./lib/socket.js";
 
 const app = express();
@@ -34,6 +35,7 @@ app.use("/api/risk", riskRouter);
 app.use("/api/reports", reportsRouter);
 app.use("/api/convoys", convoysRouter);
 app.use("/api/checkpoints", checkpointsRouter);
+app.use("/api/settings", settingsRouter);
 
 const server = http.createServer(app);
 initSocket(server, corsOrigins);

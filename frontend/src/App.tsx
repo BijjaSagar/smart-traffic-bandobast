@@ -6,6 +6,7 @@ import EventPlanner from "./pages/EventPlanner";
 import FieldOfficer from "./pages/FieldOfficer";
 import CheckpointConsole from "./pages/CheckpointConsole";
 import AfterActionReport from "./pages/AfterActionReport";
+import Settings from "./pages/Settings";
 import Layout from "./components/Layout";
 
 function Protected({ children }: { children: JSX.Element }) {
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="field" element={<FieldOfficer />} />
           <Route path="checkpoint/:postId" element={<CheckpointConsole />} />
           <Route path="report/:eventId" element={<AfterActionReport />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </AuthProvider>

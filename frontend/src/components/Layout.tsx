@@ -23,6 +23,9 @@ export default function Layout() {
               <NavLink to="/planner" className={({ isActive }) => isActive ? "underline" : "text-gray-200 hover:text-white"}>
                 Duty Planner
               </NavLink>
+              <NavLink to="/settings" className={({ isActive }) => isActive ? "underline" : "text-gray-200 hover:text-white"}>
+                Settings
+              </NavLink>
             </>
           )}
           {!isCommand && (

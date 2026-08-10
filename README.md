@@ -56,7 +56,9 @@ Demo login (after seed): `admin@sbs.local` / `Admin@123` (Commander, web dashboa
 ### Backend → Railway
 1. Create a new Railway project → **Deploy from GitHub repo**, root directory `backend/`.
 2. Add a **PostgreSQL** plugin — Railway sets `DATABASE_URL` automatically.
-3. Set env vars: `JWT_SECRET`, `CORS_ORIGIN` (your Vercel frontend URL), `NODE_ENV=production`.
+3. Add env vars: `JWT_SECRET`, `SETTINGS_ENCRYPTION_KEY` (64-char hex — generate with
+   `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`), `CORS_ORIGIN`
+   (your Vercel frontend URL), `NODE_ENV=production`.
 4. Railway runs `npm install && npm run build && npm start` (see `backend/railway.json`).
 5. After first deploy, run `npm run db:push` once (Railway shell or a one-off deploy) to create tables.
 
@@ -71,6 +73,18 @@ Demo login (after seed): `admin@sbs.local` / `Admin@123` (Commander, web dashboa
    at the production Railway URL in your release build command.
 2. `flutter build appbundle` (Android) / `flutter build ipa` (iOS) once RH Technology's
    Play Console / App Store Connect accounts are ready — same pattern as other field apps.
+
+## Adding traffic/WhatsApp API keys (Modules 6 & 9)
+
+Sign in as commander/admin and open **Settings** in the nav. Paste in your HERE, TomTom,
+or Google Maps API key, and/or your Twilio WhatsApp credentials. Values are encrypted at
+rest (`SETTINGS_ENCRYPTION_KEY`) and never displayed again in full. This is deliberately
+a database-backed settings screen rather than more env vars — so adding a key doesn't
+require a redeploy, and a commander (not just whoever manages Railway) can manage them.
+
+The routes that actually *use* these keys (live diversion suggestions, sending WhatsApp
+advisories) aren't built yet — they're the next step once at least one provider's key is
+saved. `backend/src/routes/settings.ts` exports `getSetting(key)` for exactly that.
 
 ## Data model (Phase 1)
 

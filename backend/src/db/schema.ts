@@ -140,3 +140,13 @@ export const checkpointLogs = pgTable("checkpoint_logs", {
   checkedBy: integer("checked_by").notNull().references(() => users.id),
   checkedAt: timestamp("checked_at").notNull().defaultNow(),
 });
+
+// --- Settings: encrypted integration credentials (Modules 6 and 9 plug in here) ---
+
+export const integrationSettings = pgTable("integration_settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 60 }).notNull().unique(), // e.g. "here_api_key"
+  encryptedValue: text("encrypted_value").notNull(),
+  updatedBy: integer("updated_by").references(() => users.id),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

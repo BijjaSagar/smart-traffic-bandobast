@@ -94,4 +94,13 @@ export const api = {
       body: JSON.stringify({ vehicleNumber }),
     }),
   checkpointLogs: (postId: number) => request<{ logs: any[] }>(`/api/checkpoints/${postId}/logs`),
+
+  // Settings — encrypted integration credentials
+  listSettings: () => request<{ settings: any[] }>("/api/settings"),
+  saveSetting: (key: string, value: string) =>
+    request<{ key: string; configured: boolean; preview: string }>("/api/settings", {
+      method: "PUT",
+      body: JSON.stringify({ key, value }),
+    }),
+  deleteSetting: (key: string) => request(`/api/settings/${key}`, { method: "DELETE" }),
 };
